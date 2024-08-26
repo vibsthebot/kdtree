@@ -1,5 +1,6 @@
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
+import edu.princeton.cs.algs4.StdDraw;
 import org.w3c.dom.Node;
 
 public class KdTree {
@@ -112,7 +113,28 @@ public class KdTree {
 
     // draw all points to standard draw
     public void draw() {
+        if (root.point != null) {
+            recursiveDraw(root);
+        }
+    }
 
+    private void recursiveDraw(Node node) {
+        StdDraw.setPenRadius(0.05);
+        StdDraw.setPenColor(StdDraw.BLACK);
+        StdDraw.point(node.x, node.y);
+        if (node.vertical) {
+            StdDraw.setPenColor(StdDraw.RED);
+            StdDraw.line(node.x, 0, node.x, 1);
+        } else {
+            StdDraw.setPenColor(StdDraw.BLUE);
+            StdDraw.line(0, node.y, 1, node.y);
+        }
+        if (node.leftChild != null) {
+            recursiveDraw(node.leftChild);
+        }
+        if (node.rightChild!= null) {
+            recursiveDraw(node.rightChild);
+        }
     }
 
     // all points that are inside the rectangle (or on the boundary)
