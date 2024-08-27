@@ -32,6 +32,7 @@ public class KdTree {
         double x = p.x();
         double y = p.y();
         recursiveInsert(root, p, x, y);
+        size++;
     }
 
     private void recursiveInsert(Node curNode, Point2D p, double x, double y) {
@@ -127,18 +128,26 @@ public class KdTree {
             StdDraw.setPenColor(StdDraw.RED);
             if (node.parent == null) {
                 StdDraw.line(node.x, 0, node.x, 1);
-            } else if (node.parent.parent == null || node.parent.parent.parent == null) {
+            } else if (node.parent.parent.parent == null) {
                 if (node.parent.y > node.y) {
                     StdDraw.line(node.x, 0, node.x, node.parent.y);
                 } else if (node.parent.y != node.y) {
                     StdDraw.line(node.x, node.parent.y, node.x, 1);
                 }
             } else {
-                StdDraw.line(node.x, node.parent.y, node.x, node.parent.parent.y);
+                StdDraw.line(node.x, node.parent.y, node.x, node.parent.parent.parent.y);
             }
         } else {
             StdDraw.setPenColor(StdDraw.BLUE);
-            StdDraw.line(0, node.y, 1, node.y);
+            if (node.parent.parent == null) {
+                if (node.parent.x > node.x) {
+                    StdDraw.line(0, node.y, node.parent.x, node.y);
+                } else if (node.parent.x != node.x) {
+                    StdDraw.line(node.parent.x, node.y, 1, node.y);
+                }
+            } else {
+                StdDraw.line(node.parent.x, node.y, node.parent.parent.parent.x, node.y);
+            }
         }
         StdDraw.setPenRadius(0.04);
         StdDraw.setPenColor(StdDraw.BLACK);
@@ -185,9 +194,70 @@ public class KdTree {
     }
 
     // a nearest neighbor in the set to point p; null if the set is empty
-    /*public Point2D nearest(Point2D p) {
+    public Point2D nearest(Point2D p) {
+        if (isEmpty()) return null;
 
-    }*/
+    }
+
+    private void recursiveNearest(Node node, Point2D p, Point2D curNearest, double curDistance) {
+        double distance = node.point.distanceTo(p);
+        if (distance < curDistance) {
+            curDistance = distance;
+            curNearest = node.point;
+        }
+        RectHV left, right;
+        if (node.vertical) {
+            if (node.parent == null) {
+                left = new RectHV(0, 0, node.x, 1);
+                right = new RectHV(node.x, 0, 1, 1);
+            } else if (node.parent.parent.parent == null) {
+                if (node.y > node.parent.y) {
+                    if (node.x > node.parent.parent.x) {
+                        left = new RectHV(node.parent.parent.x, node.parent.y, node.x, 1);
+                        right = new RectHV(node.x, node.parent.y, 1, 1);
+                    } else {
+                        left = new RectHV(0, node.parent.y, node.x, 1);
+                        right = new RectHV(node.x, node.parent.y, node.parent.parent.x, 1);
+                    }
+                } else {
+                    if (node.x > node.parent.parent.x) {
+                        left = new RectHV(node.parent.parent.x, 0, node.x, node.parent.y);
+                        right = new RectHV(node.x, 0, 1, node.parent.y);
+                    } else {
+                        left = new RectHV(0, 0, node.x, node.parent.y);
+                        right = new RectHV(node.x, 0, node.parent.parent.x, node.parent.y);
+                    }
+                }
+            } else {
+                if (node.y > node.parent.y) {
+                    if (node.x > node.parent.parent.x) {
+                        left = new RectHV(node.parent.parent.x, node.parent.y, node.x, 1);
+                        right = new RectHV(node.x, node.parent.y, 1, 1);
+                    } else {
+                        left = new RectHV(node.parent.parent.parent.parent.x, node.parent.y, node.x, 1);
+                        right = new RectHV(node.x, node.parent.y, node.parent.parent.x, 1);
+                    }
+                } else {
+                    if (node.x > node.parent.parent.x) {
+                        left = new RectHV(node.parent.parent.x, node.parent.parent.parent.y, node.x, node.parent.y);
+                        right = new RectHV(node.x, node.parent.parent.parent.y, 1, node.parent.y);
+                    } else {
+                        left = new RectHV(node.parent.parent.parent.parent.x, node.parent.parent.parent.y, node.x, node.parent.y);
+                        right = new RectHV(node.x, node.parent.parent.parent.y, node.parent.parent.x, node.parent.y);
+                    }
+                }
+            }
+        } else {
+            
+        }
+        if (left.distanceTo(p) < curDistance) {
+            recursiveNearest(node.leftChild, p, curNearest, curDistance);
+        }
+        if (right.distanceTo(p) < curDistance) {
+            recursiveNearest(node.rightChild, p, curNearest, curDistance);
+        }
+
+    }
 
     public static void main(String[] args) {
         KdTree tree = new KdTree();
@@ -195,6 +265,8 @@ public class KdTree {
         tree.insert(new Point2D(0.7, 0.5));
         tree.insert(new Point2D(0.3, 0.2));
         tree.insert(new Point2D(0.4, 0.3));
+        tree.insert(new Point2D(0.8, 0.7));
+        tree.insert(new Point2D(0.6, 0.8));
         tree.draw();
         for (Point2D i : tree.range(new RectHV(0.5, 0.5, 0.5, 0.5))) {
             System.out.println(i);
