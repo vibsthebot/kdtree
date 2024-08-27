@@ -1,18 +1,20 @@
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
 import edu.princeton.cs.algs4.StdDraw;
-import org.w3c.dom.Node;
+
+import java.util.ArrayList;
 
 public class KdTree {
     Node root;
     int size = 0;
+    boolean initialized = false;
     // construct an empty set of points
     public KdTree() {
 
     }
     // is the set empty?
     public boolean isEmpty() {
-        return root.point == null;
+        return !initialized;
     }
 
     // number of points in the set
@@ -24,6 +26,7 @@ public class KdTree {
     public void insert(Point2D p) {
         if (isEmpty()) {
             root = new Node(null, p);
+            initialized = true;
             return;
         }
         double x = p.x();
@@ -78,7 +81,7 @@ public class KdTree {
                 } else if (curNode.rightChild.point == p) {
                     return true;
                 } else {
-                    recursiveSearch(curNode.rightChild, p, x, y);
+                    return recursiveSearch(curNode.rightChild, p, x, y);
                 }
             } else if (x < curNode.x) {
                 if (curNode.leftChild.point == null) {
@@ -86,25 +89,25 @@ public class KdTree {
                 } else if (curNode.leftChild.point == p) {
                     return true;
                 } else {
-                    recursiveSearch(curNode.leftChild, p, x, y);
+                    return recursiveSearch(curNode.leftChild, p, x, y);
                 }
             }
         } else {
-            if (x > curNode.x) {
+            if (y > curNode.y) {
                 if (curNode.rightChild.point == null) {
                     return false;
                 } else if (curNode.rightChild.point == p) {
                     return true;
                 } else {
-                    recursiveSearch(curNode.rightChild, p, x, y);
+                    return recursiveSearch(curNode.rightChild, p, x, y);
                 }
-            } else if (x < curNode.x) {
+            } else if (y < curNode.y) {
                 if (curNode.leftChild.point == null) {
                     return false;
                 } else if (curNode.leftChild.point == p) {
                     return true;
                 } else {
-                    recursiveSearch(curNode.leftChild, p, x, y);
+                    return recursiveSearch(curNode.leftChild, p, x, y);
                 }
             }
         }
@@ -119,16 +122,27 @@ public class KdTree {
     }
 
     private void recursiveDraw(Node node) {
-        StdDraw.setPenRadius(0.05);
-        StdDraw.setPenColor(StdDraw.BLACK);
-        StdDraw.point(node.x, node.y);
+        StdDraw.setPenRadius(0.02);
         if (node.vertical) {
             StdDraw.setPenColor(StdDraw.RED);
-            StdDraw.line(node.x, 0, node.x, 1);
+            if (node.parent == null) {
+                StdDraw.line(node.x, 0, node.x, 1);
+            } else if (node.parent.parent == null || node.parent.parent.parent == null) {
+                if (node.parent.y > node.y) {
+                    StdDraw.line(node.x, 0, node.x, node.parent.y);
+                } else if (node.parent.y != node.y) {
+                    StdDraw.line(node.x, node.parent.y, node.x, 1);
+                }
+            } else {
+                StdDraw.line(node.x, node.parent.y, node.x, node.parent.parent.y);
+            }
         } else {
             StdDraw.setPenColor(StdDraw.BLUE);
             StdDraw.line(0, node.y, 1, node.y);
         }
+        StdDraw.setPenRadius(0.04);
+        StdDraw.setPenColor(StdDraw.BLACK);
+        StdDraw.point(node.x, node.y);
         if (node.leftChild != null) {
             recursiveDraw(node.leftChild);
         }
@@ -139,16 +153,52 @@ public class KdTree {
 
     // all points that are inside the rectangle (or on the boundary)
     public Iterable<Point2D> range(RectHV rect) {
+        if (isEmpty()) return null;
+        double xMin = rect.xmin();
+        double xMax = rect.xmax();
+        double yMin = rect.ymin();
+        double yMax = rect.ymax();
+        ArrayList<Point2D> iterable = new ArrayList<>();
+        recursiveRange(root, iterable, rect, xMin, xMax, yMin, yMax);
+        return iterable;
+    }
 
+    private void recursiveRange(Node node, ArrayList<Point2D> iterable, RectHV rect, double xMin, double xMax, double yMin, double yMax) {
+        if (rect.contains(node.point)) {
+            iterable.add(node.point);
+        }
+        if (node.vertical) {
+            if (xMin <= node.x && node.leftChild != null) {
+                recursiveRange(node.leftChild, iterable, rect, xMin, xMax, yMin, yMax);
+            }
+            if (xMax >= node.x && node.rightChild != null) {
+                recursiveRange(node.rightChild, iterable, rect, xMin, xMax, yMin, yMax);
+            }
+        } else {
+            if (yMin <= node.y && node.leftChild != null) {
+                recursiveRange(node.leftChild, iterable, rect, xMin, xMax, yMin, yMax);
+            }
+            if (yMax >= node.y && node.rightChild != null) {
+                recursiveRange(node.rightChild, iterable, rect, xMin, xMax, yMin, yMax);
+            }
+        }
     }
 
     // a nearest neighbor in the set to point p; null if the set is empty
-    public Point2D nearest(Point2D p) {
+    /*public Point2D nearest(Point2D p) {
 
-    }
+    }*/
 
     public static void main(String[] args) {
-
+        KdTree tree = new KdTree();
+        tree.insert(new Point2D(0.5, 0.5));
+        tree.insert(new Point2D(0.7, 0.5));
+        tree.insert(new Point2D(0.3, 0.2));
+        tree.insert(new Point2D(0.4, 0.3));
+        tree.draw();
+        for (Point2D i : tree.range(new RectHV(0.5, 0.5, 0.5, 0.5))) {
+            System.out.println(i);
+        }
     }
 
     private class Node {
