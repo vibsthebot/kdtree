@@ -97,7 +97,7 @@ public class KdTree {
             }
         } else {
             if (y > curNode.y) {
-                if (curNode.rightChild.point == null) {
+                if (curNode.rightChild == null) {
                     return false;
                 } else if (curNode.rightChild.point.equals(p)) {
                     return true;
@@ -105,7 +105,7 @@ public class KdTree {
                     return recursiveSearch(curNode.rightChild, p, x, y);
                 }
             } else if (y < curNode.y) {
-                if (curNode.leftChild.point == null) {
+                if (curNode.leftChild == null) {
                     return false;
                 } else if (curNode.leftChild.point.equals(p)) {
                     return true;
@@ -211,21 +211,26 @@ public class KdTree {
             nearest.distance = distance;
             nearest.point = node.point;
         }
+
+        // Define left and right rectangles
         RectHV left, right;
         if (node.vertical) {
             left = new RectHV(curRect.xmin(), curRect.ymin(), node.x, curRect.ymax());
             right = new RectHV(node.x, curRect.ymin(), curRect.xmax(), curRect.ymax());
         } else {
-            left = new RectHV(curRect.xmin(), node.y, curRect.xmax(), curRect.ymax());
-            right = new RectHV(curRect.xmin(), curRect.ymin(), curRect.xmax(), node.y);
+            left = new RectHV(curRect.xmin(), curRect.ymin(), curRect.xmax(), node.y);
+            right = new RectHV(curRect.xmin(), node.y, curRect.xmax(), curRect.ymax());
         }
+
+        // Check if the point is within the distance from the left rectangle
         if (left.distanceTo(p) < nearest.distance && node.leftChild != null) {
             recursiveNearest(node.leftChild, p, nearest, left);
         }
+
+        // Check if the point is within the distance from the right rectangle
         if (right.distanceTo(p) < nearest.distance && node.rightChild != null) {
             recursiveNearest(node.rightChild, p, nearest, right);
         }
-
     }
 
     public static void main(String[] args) {
@@ -240,7 +245,7 @@ public class KdTree {
         for (Point2D i : tree.range(new RectHV(0.5, 0.5, 0.5, 0.5))) {
             System.out.println(i);
         }
-        System.out.println(tree.nearest(new Point2D(0.6, 0.8)));
+        System.out.println(tree.nearest(new Point2D(0.6, 0.79999)));
     }
 
     private class Node {
