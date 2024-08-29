@@ -38,6 +38,7 @@ public class KdTree {
             if (x > curNode.x) {
                 if (curNode.rightChild == null) {
                     curNode.rightChild = new Node(curNode, p, new RectHV(curNode.x, curNode.rect.ymin(), curNode.rect.xmax(), curNode.rect.ymax()));
+                    System.out.println(curNode.rightChild.rect);
                     size++;
                 } else if (!curNode.rightChild.point.equals(p)) {
                     recursiveInsert(curNode.rightChild, p, x, y);
@@ -45,6 +46,7 @@ public class KdTree {
             } else if (x < curNode.x) {
                 if (curNode.leftChild == null) {
                     curNode.leftChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.rect.ymin(), curNode.x, curNode.rect.ymax()));
+                    System.out.println(curNode.leftChild.rect);
                     size++;
                 } else if (!curNode.leftChild.point.equals(p)) {
                     recursiveInsert(curNode.leftChild, p, x, y);
@@ -53,14 +55,15 @@ public class KdTree {
         } else {
             if (y > curNode.y) {
                 if (curNode.rightChild == null) {
-                    curNode.rightChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.rect.ymin(), curNode.rect.xmax(), curNode.y));
+                    curNode.rightChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.y, curNode.rect.xmax(), curNode.rect.ymax()));
+                    System.out.println(curNode.rightChild.rect);
                     size++;
                 } else if (curNode.rightChild.point != p) {
                     recursiveInsert(curNode.rightChild, p, x, y);
                 }
             } else if (y < curNode.y) {
                 if (curNode.leftChild == null) {
-                    curNode.leftChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.y, curNode.rect.xmax(), curNode.rect.ymax()));
+                    curNode.leftChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.rect.ymin(), curNode.rect.xmax(), curNode.y));
                     size++;
                 } else if (curNode.leftChild.point != p) {
                     recursiveInsert(curNode.leftChild, p, x, y);
@@ -126,30 +129,13 @@ public class KdTree {
 
     private void recursiveDraw(Node node) {
         StdDraw.setPenRadius(0.02);
+        StdDraw.setPenRadius(0.005);
         if (node.vertical) {
             StdDraw.setPenColor(StdDraw.RED);
-            if (node.parent == null) {
-                StdDraw.line(node.x, 0, node.x, 1);
-            } else if (node.parent.parent.parent == null) {
-                if (node.parent.y > node.y) {
-                    StdDraw.line(node.x, 0, node.x, node.parent.y);
-                } else if (node.parent.y != node.y) {
-                    StdDraw.line(node.x, node.parent.y, node.x, 1);
-                }
-            } else {
-                StdDraw.line(node.x, node.parent.y, node.x, node.parent.parent.parent.y);
-            }
+            StdDraw.line(node.x, node.rect.ymin(), node.x, node.rect.ymax());
         } else {
             StdDraw.setPenColor(StdDraw.BLUE);
-            if (node.parent.parent == null) {
-                if (node.parent.x > node.x) {
-                    StdDraw.line(0, node.y, node.parent.x, node.y);
-                } else if (node.parent.x != node.x) {
-                    StdDraw.line(node.parent.x, node.y, 1, node.y);
-                }
-            } else {
-                StdDraw.line(node.parent.x, node.y, node.parent.parent.parent.x, node.y);
-            }
+            StdDraw.line(node.rect.xmin(), node.y, node.rect.xmax(), node.y);
         }
         StdDraw.setPenRadius(0.04);
         StdDraw.setPenColor(StdDraw.BLACK);
