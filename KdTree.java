@@ -24,7 +24,7 @@ public class KdTree {
     // add the point to the set (if it is not already in the set)
     public void insert(Point2D p) {
         if (isEmpty()) {
-            root = new Node(null, p);
+            root = new Node(null, p, new RectHV(0, 0, 1, 1));
             size++;
             return;
         }
@@ -37,14 +37,14 @@ public class KdTree {
         if (curNode.vertical) {
             if (x > curNode.x) {
                 if (curNode.rightChild == null) {
-                    curNode.rightChild = new Node(curNode, p);
+                    curNode.rightChild = new Node(curNode, p, new RectHV(curNode.x, curNode.rect.ymin(), curNode.rect.xmax(), curNode.rect.ymax()));
                     size++;
                 } else if (!curNode.rightChild.point.equals(p)) {
                     recursiveInsert(curNode.rightChild, p, x, y);
                 }
             } else if (x < curNode.x) {
                 if (curNode.leftChild == null) {
-                    curNode.leftChild = new Node(curNode, p);
+                    curNode.leftChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.rect.ymin(), curNode.x, curNode.rect.ymax()));
                     size++;
                 } else if (!curNode.leftChild.point.equals(p)) {
                     recursiveInsert(curNode.leftChild, p, x, y);
@@ -53,14 +53,14 @@ public class KdTree {
         } else {
             if (y > curNode.y) {
                 if (curNode.rightChild == null) {
-                    curNode.rightChild = new Node(curNode, p);
+                    curNode.rightChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.rect.ymin(), curNode.rect.xmax(), curNode.y));
                     size++;
                 } else if (curNode.rightChild.point != p) {
                     recursiveInsert(curNode.rightChild, p, x, y);
                 }
             } else if (y < curNode.y) {
                 if (curNode.leftChild == null) {
-                    curNode.leftChild = new Node(curNode, p);
+                    curNode.leftChild = new Node(curNode, p, new RectHV(curNode.rect.xmin(), curNode.y, curNode.rect.xmax(), curNode.rect.ymax()));
                     size++;
                 } else if (curNode.leftChild.point != p) {
                     recursiveInsert(curNode.leftChild, p, x, y);
@@ -200,12 +200,11 @@ public class KdTree {
         if (isEmpty()) return null;
         if (contains(p)) return p;
         NearestData nearest = new NearestData(null, 2);
-        RectHV curRect = new RectHV(0, 0, 1, 1);
-        recursiveNearest(root, p, nearest, curRect);
+        recursiveNearest(root, p, nearest);
         return nearest.point;
     }
 
-    private void recursiveNearest(Node node, Point2D p, NearestData nearest, RectHV curRect) {
+    private void recursiveNearest(Node node, Point2D p, NearestData nearest) {
         double distance = node.point.distanceTo(p);
         if (distance < nearest.distance) {
             nearest.distance = distance;
@@ -213,23 +212,15 @@ public class KdTree {
         }
 
         // Define left and right rectangles
-        RectHV left, right;
-        if (node.vertical) {
-            left = new RectHV(curRect.xmin(), curRect.ymin(), node.x, curRect.ymax());
-            right = new RectHV(node.x, curRect.ymin(), curRect.xmax(), curRect.ymax());
-        } else {
-            left = new RectHV(curRect.xmin(), curRect.ymin(), curRect.xmax(), node.y);
-            right = new RectHV(curRect.xmin(), node.y, curRect.xmax(), curRect.ymax());
-        }
 
         // Check if the point is within the distance from the left rectangle
-        if (left.distanceTo(p) < nearest.distance && node.leftChild != null) {
-            recursiveNearest(node.leftChild, p, nearest, left);
+        if (node.leftChild != null && node.leftChild.rect.distanceTo(p) < nearest.distance) {
+            recursiveNearest(node.leftChild, p, nearest);
         }
 
         // Check if the point is within the distance from the right rectangle
-        if (right.distanceTo(p) < nearest.distance && node.rightChild != null) {
-            recursiveNearest(node.rightChild, p, nearest, right);
+        if (node.rightChild != null && node.rightChild.rect.distanceTo(p) < nearest.distance) {
+            recursiveNearest(node.rightChild, p, nearest);
         }
     }
 
@@ -249,17 +240,19 @@ public class KdTree {
     }
 
     private class Node {
-        Node parent;
         Node leftChild = null;
         Node rightChild = null;
+        Node parent;
+        RectHV rect;
         Point2D point;
         double x;
         double y;
         boolean vertical;
 
-        public Node(Node parent, Point2D point) {
-            this.parent = parent;
+        public Node(Node parent, Point2D point, RectHV rect) {
             this.point = point;
+            this.parent = parent;
+            this.rect = rect;
             vertical = parent == null || !parent.vertical;
             x = point.x();
             y = point.y();
